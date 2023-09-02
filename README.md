@@ -1,6 +1,6 @@
 Demo: https://youtube.com/shorts/XBA2P9bZEBs?feature=shared
 
-2WD Robot Car with implemented speed regulation and remote control.
+2WD Robot with implemented speed regulation and remote control.
 - Speed measurement with optical encoders, traced back to pulse-width time measurement
 - Speed regulation with implemented PI controller
 - Direction command messages sent via Bluetooth/UART interface
