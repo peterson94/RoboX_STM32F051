@@ -159,7 +159,14 @@ int main(void)
 
 		  case 1:
 			  // Not going but needed
+			  if(FLAG_TIMEOUT)
+			  {
+				  HAL_TIM_Base_Stop_IT(&htim15);
+				  htim15.Instance->CNT = 0x0;
+			  }
+
 			  MOTOR = Motor_Set(cmd[1]);
+
 			  if (MOTOR == 1)
 			  {
 				  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
@@ -167,20 +174,33 @@ int main(void)
 				  HAL_TIM_Base_Start_IT(&htim15);
 			  }
 
+			  FLAG_UART_1 = 0x00;
 			  HAL_UART_Receive_DMA(&huart1, cmd, 3);
 
-			  FLAG_UART_1 = 0x00;
+			  if(FLAG_TIMEOUT)
+			  {
+				  FLAG_TIMEOUT= 0x00;
+				  HAL_TIM_Base_Start_IT(&htim15);
+			  }
+
 			  break;
 
 		  case 2:
 			  // Going and needed
 			  if (FLAG_UART_1)
 			  {
-				  MOTOR = Motor_Set(cmd[1]);
+				  HAL_TIM_Base_Stop_IT(&htim15);
 				  htim15.Instance->CNT = 0x0;
+
+				  MOTOR = Motor_Set(cmd[1]);
+
 				  // We want to receive the next command
-				  HAL_UART_Receive_DMA(&huart1, cmd, 3);
 				  FLAG_UART_1 = 0x00;
+				  HAL_UART_Receive_DMA(&huart1, cmd, 3);
+
+				  // And let us start timeouter again
+				  FLAG_TIMEOUT = 0x00;
+				  HAL_TIM_Base_Start_IT(&htim15);
 			  }
 
 			  wheel_1.RPM = Speed_Calc(&wheel_1);
@@ -191,7 +211,8 @@ int main(void)
 			  break;
 
 		  case 3:
-			  // Going but not needed
+			  // Going but not needed (or any error case)
+
 			  MOTOR = Motor_Set('5');
 			  Speed_Control(&htim1, 0, &wheel_1, &wheel_2);
 			  HAL_TIM_IC_Stop_IT(&htim2, TIM_CHANNEL_1);
@@ -217,6 +238,12 @@ int main(void)
 			  wheel_2.IC_Val_0 = 0;
 
 			  FLAG_TIMEOUT = 0x00;
+
+			  if(FLAG_UART_1)
+			  {
+				  FLAG_UART_1 = 0x00;
+			  	  HAL_UART_Receive_DMA(&huart1, cmd, 3);
+			  }
 			  break;
 	  }
 
@@ -721,15 +748,12 @@ static uint32_t Status_Check()
 {
 	if ((MOTOR == 0) && (FLAG_UART_1 == 0) && (FLAG_TIMEOUT == 0))
 		return 0;
-	else if ((MOTOR == 0) && (FLAG_UART_1 == 1) && (FLAG_TIMEOUT == 0))
+	else if ((MOTOR == 0) && (FLAG_UART_1 == 1))
 		return 1;
 	else if ((MOTOR) && (FLAG_TIMEOUT == 0))
 		return 2;
-	else if ((MOTOR) && (FLAG_TIMEOUT == 1))
-		return 3;
-	else if ((MOTOR == 0) && (FLAG_UART_1 == 1) && (FLAG_TIMEOUT == 0))
-		return 5;
-	else return 6;
+	else return 3;
+
 }
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
