@@ -14,13 +14,13 @@ void Speed_Control(TIM_HandleTypeDef *htim, float base, Wheel *act_1, Wheel *act
 
 	static float err_1 = 0.0f;
 	static float err_1_sum = 0.0f;
-	static float kp_1 = 0.5f;
-	static float ki_1 = 0.0005f;
+	static float kp_1 = 0.3f;
+	static float ki_1 = 0.0002f;
 
 	static float err_2 = 0.0f;
 	static float err_2_sum = 0.0f;
-	static float kp_2 = 0.5f;
-	static float ki_2 = 0.0005f;
+	static float kp_2 = 0.3f;
+	static float ki_2 = 0.0002f;
 
 	float ACT_1 = 0.0f;
 	float ACT_2 = 0.0f;
